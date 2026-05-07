@@ -1,0 +1,125 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(data) {
+      return isSignedIn() && data.ownerId == request.auth.uid;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validations ---
+
+    function isValidProject(data) {
+      return data.keys().hasAll(['name', 'status', 'ownerId', 'createdAt', 'updatedAt']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.status in ['En cours', 'Terminé', 'Suspendu'] &&
+             data.ownerId == request.auth.uid &&
+             (data.get('budget', 0) is number) &&
+             data.createdAt == request.time &&
+             data.updatedAt == request.time;
+    }
+
+    function isValidPersonnel(data) {
+      return data.keys().hasAll(['lastName', 'firstName', 'ownerId', 'createdAt', 'updatedAt']) &&
+             data.lastName is string && data.firstName is string &&
+             data.ownerId == request.auth.uid &&
+             data.createdAt == request.time &&
+             data.updatedAt == request.time;
+    }
+
+    function isValidMaterial(data) {
+      return data.keys().hasAll(['name', 'stockQuantity', 'ownerId', 'createdAt', 'updatedAt']) &&
+             data.name is string && data.stockQuantity is number &&
+             data.ownerId == request.auth.uid &&
+             data.createdAt == request.time &&
+             data.updatedAt == request.time;
+    }
+
+    function isValidMachine(data) {
+      return data.keys().hasAll(['name', 'state', 'ownerId', 'createdAt', 'updatedAt']) &&
+             data.name is string && data.state in ['Fonctionnel', 'Panne'] &&
+             data.ownerId == request.auth.uid &&
+             data.createdAt == request.time &&
+             data.updatedAt == request.time;
+    }
+
+    function isValidFinancialDoc(data) {
+      return data.keys().hasAll(['type', 'amount', 'projectId', 'ownerId', 'status', 'createdAt', 'updatedAt']) &&
+             data.type in ['Devis', 'Facture'] &&
+             data.amount is number && 
+             data.projectId is string &&
+             data.status in ['Payé', 'Non payé'] &&
+             data.ownerId == request.auth.uid &&
+             data.createdAt == request.time &&
+             data.updatedAt == request.time;
+    }
+
+    // --- Collections ---
+
+    match /projects/{projectId} {
+      allow get, delete: if isOwner(existing());
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isValidId(projectId) && isValidProject(incoming());
+      allow update: if isOwner(existing()) && isValidProject(incoming()) &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().ownerId == existing().ownerId;
+    }
+
+    match /personnel/{personnelId} {
+      allow get, delete: if isOwner(existing());
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isValidId(personnelId) && isValidPersonnel(incoming());
+      allow update: if isOwner(existing()) && isValidPersonnel(incoming()) &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().ownerId == existing().ownerId;
+    }
+
+    match /materials/{materialId} {
+      allow get, delete: if isOwner(existing());
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isValidId(materialId) && isValidMaterial(incoming());
+      allow update: if isOwner(existing()) && isValidMaterial(incoming()) &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().ownerId == existing().ownerId;
+    }
+
+    match /machines/{machineId} {
+      allow get, delete: if isOwner(existing());
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isValidId(machineId) && isValidMachine(incoming());
+      allow update: if isOwner(existing()) && isValidMachine(incoming()) &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().ownerId == existing().ownerId;
+    }
+
+    match /financials/{docId} {
+      allow get, delete: if isOwner(existing());
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isValidId(docId) && isValidFinancialDoc(incoming());
+      allow update: if isOwner(existing()) && isValidFinancialDoc(incoming()) &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().ownerId == existing().ownerId;
+    }
+  }
+}

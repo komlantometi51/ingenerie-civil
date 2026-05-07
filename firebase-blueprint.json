@@ -1,0 +1,120 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Projet de Construction",
+      "description": "Détails d'un projet de génie civil",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Nom du projet" },
+        "description": { "type": "string", "description": "Description du projet" },
+        "location": { "type": "string", "description": "Lieu du chantier" },
+        "startDate": { "type": "string", "format": "date-time", "description": "Date de début" },
+        "endDate": { "type": "string", "format": "date-time", "description": "Date de fin" },
+        "status": { "type": "string", "enum": ["En cours", "Terminé", "Suspendu"] },
+        "budget": { "type": "number", "description": "Budget prévisionnel" },
+        "client": { "type": "string", "description": "Nom du client associé" },
+        "ownerId": { "type": "string", "description": "ID de l'utilisateur créateur" }
+      },
+      "required": ["name", "status", "ownerId"]
+    },
+    "Personnel": {
+      "title": "Ressource Humaine",
+      "description": "Informations sur un employé ou ouvrier",
+      "type": "object",
+      "properties": {
+        "lastName": { "type": "string" },
+        "firstName": { "type": "string" },
+        "specialty": { "type": "string", "description": "Domaine d'expertise" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "status": { "type": "string", "enum": ["Disponible", "Occupé", "En congé"] },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["lastName", "firstName", "ownerId"]
+    },
+    "Material": {
+      "title": "Matériau",
+      "description": "Stock de matériaux de construction",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "description": "Nature du matériau" },
+        "unitPrice": { "type": "number" },
+        "stockQuantity": { "type": "number" },
+        "supplier": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["name", "stockQuantity", "ownerId"]
+    },
+    "Machine": {
+      "title": "Machine",
+      "description": "Équipement et machines de chantier",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "state": { "type": "string", "enum": ["Fonctionnel", "Panne"] },
+        "lastMaintenanceDate": { "type": "string", "format": "date-time" },
+        "nextMaintenanceDate": { "type": "string", "format": "date-time" },
+        "usageCost": { "type": "number" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["name", "state", "ownerId"]
+    },
+    "FinancialDoc": {
+      "title": "Document Financier",
+      "description": "Devis, factures et paiements",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["Devis", "Facture"] },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["Payé", "Non payé"] },
+        "paymentMode": { "type": "string" },
+        "projectId": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["type", "amount", "projectId", "ownerId"]
+    },
+    "Assignment": {
+      "title": "Affectation",
+      "description": "Lien entre projet et ouvrier",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "workerId": { "type": "string" },
+        "role": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["projectId", "workerId", "ownerId"]
+    }
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Collection principale des projets"
+    },
+    "/personnel/{personnelId}": {
+      "schema": "Personnel",
+      "description": "Base de données du personnel"
+    },
+    "/materials/{materialId}": {
+      "schema": "Material",
+      "description": "Inventaire des matériaux"
+    },
+    "/machines/{machineId}": {
+      "schema": "Machine",
+      "description": "Gestion du parc de machines"
+    },
+    "/financials/{docId}": {
+      "schema": "FinancialDoc",
+      "description": "Suivi des devis et factures"
+    },
+    "/assignments/{assignmentId}": {
+      "schema": "Assignment",
+      "description": "Affectations de personnel aux projets"
+    }
+  }
+}
